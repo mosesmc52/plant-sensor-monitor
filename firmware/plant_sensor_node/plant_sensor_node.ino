@@ -7,8 +7,8 @@
 #include <U8x8lib.h>
 
 // -------------------- Wi-Fi Configuration --------------------
-const char* wifiSsid = "Verizon_F3JP4G";
-const char* wifiPassword = "then7detain2cod";
+const char* wifiSsid = "";
+const char* wifiPassword = "";
 const char* serverUrl =
   "http://greenhouse.local:8000/api/v1/readings";
 
