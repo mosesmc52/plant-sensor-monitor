@@ -16,6 +16,7 @@ sqlalchemy = "^2.0.51"
 
 # Raspberry Pi-only dependencies
 gpiozero = { version = "^2.0.1", markers = "sys_platform == 'linux'" }
+lgpio = { version = "^0.2.2.0", markers = "sys_platform == 'linux'" }
 spidev = { version = "^3.8", markers = "sys_platform == 'linux'" }
 
 [build-system]

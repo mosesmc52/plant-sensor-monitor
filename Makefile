@@ -30,11 +30,11 @@ help:
 install-dev:
 	$(DEV_COMPOSE) run --build --rm plant-monitor poetry install --no-root
 
-run-dev:
-	$(DEV_COMPOSE) up --build
+up-dev:
+	$(DEV_COMPOSE) up
 
-run-dev-d:
-	$(DEV_COMPOSE) up --build -d
+up-dev-d:
+	$(DEV_COMPOSE) up -d
 
 display-dev:
 	$(DEV_COMPOSE) run --rm plant-monitor python display_test.py
@@ -42,10 +42,10 @@ display-dev:
 test-dev:
 	$(DEV_COMPOSE) run --rm plant-monitor python -m compileall -q api display exceptions models services vendor web main.py display_test.py
 
-docker-dev:
-	$(DEV_COMPOSE) up --build
+build-dev:
+	$(DEV_COMPOSE) --build
 
-docker-dev-down:
+down-dev:
 	$(DEV_COMPOSE) down
 
 docker-dev-display:
@@ -54,19 +54,19 @@ docker-dev-display:
 install-pi:
 	$(PI_COMPOSE) run --build --rm plant-monitor poetry install --no-root
 
-run-pi:
-	$(PI_COMPOSE) up --build
+up-pi:
+	$(PI_COMPOSE) up
 
-run-pi-d:
-	$(PI_COMPOSE) up --build -d
+up-pi-d:
+	$(PI_COMPOSE) up -d
 
 display-pi:
 	$(PI_COMPOSE) run --rm plant-monitor python display_test.py
 
-docker-pi:
-	$(PI_COMPOSE) up --build
+build-pi:
+	$(PI_COMPOSE) --build
 
-docker-pi-down:
+down-pi:
 	$(PI_COMPOSE) down
 
 docker-pi-display:
