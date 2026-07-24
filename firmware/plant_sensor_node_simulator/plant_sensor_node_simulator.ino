@@ -19,7 +19,7 @@ const char* serverUrl =
 const char* deviceId = "plant-sensor-01";
 
 // Send one reading every 5 seconds.
-const unsigned long postIntervalMs = 5000;
+const unsigned long postIntervalMs = 30000;
 
 // Built-in LED used as the transmission indicator.
 #ifndef LED_BUILTIN
