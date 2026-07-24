@@ -16,7 +16,7 @@ const char* serverUrl =
 
 // -------------------- Device Configuration --------------------
 
-const char* deviceId = "plant-sensor-01";
+const char* deviceId = "Pesto";
 
 // Send one reading every 5 seconds.
 const unsigned long postIntervalMs = 15000;

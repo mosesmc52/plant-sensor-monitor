@@ -1,8 +1,22 @@
 #include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 #include <Wire.h>
 #include <BH1750.h>
 #include <Adafruit_AHTX0.h>
 #include <U8x8lib.h>
+
+// -------------------- Wi-Fi Configuration --------------------
+const char* wifiSsid = "Verizon_F3JP4G";
+const char* wifiPassword = "then7detain2cod";
+const char* serverUrl =
+  "http://greenhouse.local:8000/api/v1/readings";
+
+// -------------------- Device Configuration --------------------
+const char* deviceId = "Pesto";
+const unsigned long postIntervalMs = 15000;
+unsigned long lastPostTime = 0;
+unsigned long readingNumber = 0;
 
 // -------------------- Pins --------------------
 const int moisturePin_1 = A0;
@@ -49,6 +63,14 @@ const char* getLightCondition(float lux);
 
 ClimateData readClimate();
 
+void connectToWiFi();
+bool sendSensorData(
+  int moisture1,
+  int moisture2,
+  float lux,
+  ClimateData climate
+);
+
 void displaySensorData(
   int moisture1,
   int moisture2,
@@ -88,6 +110,8 @@ void setup() {
     Serial.println("Failed to initialize AHT20");
   }
 
+  connectToWiFi();
+
   delay(1000);
   u8x8.clear();
 }
@@ -95,6 +119,10 @@ void setup() {
 // ------------------------------------------------------------
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    connectToWiFi();
+  }
+
   int rawMoisture1 = readMoistureSensor(moisturePin_1);
   int rawMoisture2 = readMoistureSensor(moisturePin_2);
 
@@ -162,7 +190,120 @@ void loop() {
     climate
   );
 
+  unsigned long currentTime = millis();
+  if (
+    lastPostTime == 0 ||
+    currentTime - lastPostTime >= postIntervalMs
+  ) {
+    lastPostTime = currentTime;
+    sendSensorData(moisture1, moisture2, lux, climate);
+  }
+
   delay(1000);
+}
+
+// -------------------- Wi-Fi and HTTP --------------------
+
+void connectToWiFi() {
+  if (WiFi.status() == WL_CONNECTED) {
+    return;
+  }
+
+  Serial.print("Connecting to Wi-Fi: ");
+  Serial.println(wifiSsid);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wifiSsid, wifiPassword);
+
+  const unsigned long timeoutMs = 20000;
+  unsigned long connectionStart = millis();
+
+  while (
+    WiFi.status() != WL_CONNECTED &&
+    millis() - connectionStart < timeoutMs
+  ) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Wi-Fi connected.");
+    Serial.print("Device IP address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Wi-Fi connection timed out.");
+  }
+}
+
+bool sendSensorData(
+  int moisture1,
+  int moisture2,
+  float lux,
+  ClimateData climate
+) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Cannot send data: Wi-Fi unavailable.");
+    return false;
+  }
+
+  WiFiClient wifiClient;
+  HTTPClient http;
+
+  if (!http.begin(wifiClient, serverUrl)) {
+    Serial.println("Unable to initialize HTTP client.");
+    return false;
+  }
+
+  http.addHeader("Content-Type", "application/json");
+
+  // Use valid API fallback values when a sensor was unavailable.
+  float temperature = climate.temperature >= -100
+    ? climate.temperature
+    : 0.0;
+  float humidity = climate.humidity >= 0
+    ? climate.humidity
+    : 0.0;
+  float light = lux >= 0 ? lux : 0.0;
+
+  String jsonPayload = "{";
+  jsonPayload += "\"device_id\":\"";
+  jsonPayload += deviceId;
+  jsonPayload += "\",";
+  jsonPayload += "\"reading_number\":";
+  jsonPayload += String(readingNumber++);
+  jsonPayload += ",\"temperature_f\":";
+  jsonPayload += String(temperature, 1);
+  jsonPayload += ",\"humidity_percent\":";
+  jsonPayload += String(humidity, 1);
+  jsonPayload += ",\"light_lux\":";
+  jsonPayload += String(light, 1);
+  jsonPayload += ",\"moisture_1_percent\":";
+  jsonPayload += String(moisture1);
+  jsonPayload += ",\"moisture_2_percent\":";
+  jsonPayload += String(moisture2);
+  jsonPayload += ",\"uptime_seconds\":";
+  jsonPayload += String(millis() / 1000);
+  jsonPayload += "}";
+
+  Serial.println("POST payload:");
+  Serial.println(jsonPayload);
+
+  int responseCode = http.POST(jsonPayload);
+
+  if (responseCode <= 0) {
+    Serial.print("HTTP request error: ");
+    Serial.println(http.errorToString(responseCode));
+    http.end();
+    return false;
+  }
+
+  Serial.print("HTTP response code: ");
+  Serial.println(responseCode);
+
+  http.end();
+  return responseCode >= 200 && responseCode < 300;
 }
 
 // -------------------- Moisture Functions --------------------
