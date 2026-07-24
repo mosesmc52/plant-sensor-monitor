@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from threading import Lock
 from typing import Any
 
 from fastapi import APIRouter, status
@@ -9,6 +10,7 @@ from models.api.sensor_reading import SensorReading
 
 
 router = APIRouter(tags=["Health"])
+_display_lock = Lock()
 
 
 @router.post(
@@ -85,13 +87,21 @@ def process_sensor_data(
         reading_number=reading.reading_number,
     )
 
-    display = create_display()
-    try:
-        display.initialize()
-        display.show(image)
-    except Exception as exc:
-        # A sensor reading should still be accepted if the display is
-        # disconnected or temporarily unavailable.
-        print(f"Display update failed: {exc}")
-    finally:
-        display.shutdown()
+    # SPI and the e-ink display are shared hardware. Serialize updates so
+    # concurrent sensor posts cannot close one request's SPI handle while
+    # another request is using it.
+    with _display_lock:
+        display = create_display()
+        try:
+            display.initialize()
+            display.show(image)
+        except Exception as exc:
+            # A sensor reading should still be accepted if the display is
+            # disconnected or temporarily unavailable.
+            print(f"Display update failed: {exc}")
+        finally:
+            try:
+                display.shutdown()
+            except Exception as exc:
+                # Cleanup must not turn an accepted reading into a 500.
+                print(f"Display cleanup failed: {exc}")

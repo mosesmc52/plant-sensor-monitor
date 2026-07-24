@@ -84,5 +84,14 @@ class WaveshareDisplay(Display):
             self._display.sleep()
 
     def shutdown(self) -> None:
-        self.sleep()
-        self._display = None
+        if self._display is None:
+            return
+
+        try:
+            self.sleep()
+        except OSError as exc:
+            # The vendor driver may already have closed the SPI descriptor.
+            # The image has already been sent, so cleanup should remain safe.
+            print(f"Display sleep skipped: {exc}")
+        finally:
+            self._display = None
