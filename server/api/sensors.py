@@ -3,6 +3,8 @@ from typing import Any
 
 from fastapi import APIRouter, status
 
+from display.display import create_display
+from display.renderer import render_plant_screen
 from models.api.sensor_reading import SensorReading
 
 
@@ -65,5 +67,31 @@ def process_sensor_data(
     - Send commands back to the Seeed device
     """
 
-    # Sensor data processing will be added here.
-    pass
+    del received_at
+
+    moisture_percent = min(
+        reading.moisture_1_percent,
+        reading.moisture_2_percent,
+    )
+    message = "Needs water" if moisture_percent < 30 else "I am healthy!"
+    image = render_plant_screen(
+        plant_name=reading.device_id,
+        message=message,
+        moisture_percent=reading.moisture_1_percent,
+        moisture_2_percent=reading.moisture_2_percent,
+        temperature_f=reading.temperature_f,
+        humidity_percent=reading.humidity_percent,
+        light_lux=reading.light_lux,
+        reading_number=reading.reading_number,
+    )
+
+    display = create_display()
+    try:
+        display.initialize()
+        display.show(image)
+    except Exception as exc:
+        # A sensor reading should still be accepted if the display is
+        # disconnected or temporarily unavailable.
+        print(f"Display update failed: {exc}")
+    finally:
+        display.shutdown()

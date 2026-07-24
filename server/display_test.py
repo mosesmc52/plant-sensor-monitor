@@ -1,26 +1,5 @@
-import os
-
-from display.preview import PreviewDisplay
+from display.display import create_display
 from display.renderer import render_plant_screen
-from display.waveshare import WaveshareDisplay
-
-
-def create_display():
-    backend = os.getenv(
-        "DISPLAY_BACKEND",
-        "preview",
-    )
-
-    if backend == "waveshare":
-        return WaveshareDisplay()
-
-    if backend != "preview":
-        raise ValueError(
-            f"Unsupported DISPLAY_BACKEND={backend!r}; "
-            "use 'preview' or 'waveshare'."
-        )
-
-    return PreviewDisplay()
 
 
 def main() -> None:
