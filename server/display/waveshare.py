@@ -19,7 +19,23 @@ class WaveshareDisplay(Display):
             ) from exc
 
         if self._display is None:
-            self._display = epd7in5_V2.EPD()
+            # Waveshare distributes multiple versions of this driver. The
+            # current one calls the class EPD, while older/vendor variants
+            # use a model-specific class name.
+            display_class = next(
+                (
+                    getattr(epd7in5_V2, name, None)
+                    for name in ("EPD", "EPD_7in5_V2", "EPD_7IN5_V2")
+                    if getattr(epd7in5_V2, name, None) is not None
+                ),
+                None,
+            )
+            if display_class is None:
+                raise RuntimeError(
+                    "The Waveshare 7.5in V2 driver does not expose an "
+                    "EPD or EPD_7in5_V2 class."
+                )
+            self._display = display_class()
         return self._display
 
     def initialize(self) -> None:
