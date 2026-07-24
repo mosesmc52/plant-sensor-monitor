@@ -22,18 +22,35 @@ class WaveshareDisplay(Display):
             # Waveshare distributes multiple versions of this driver. The
             # current one calls the class EPD, while older/vendor variants
             # use a model-specific class name.
-            display_class = next(
-                (
-                    getattr(epd7in5_V2, name, None)
-                    for name in ("EPD", "EPD_7in5_V2", "EPD_7IN5_V2")
-                    if getattr(epd7in5_V2, name, None) is not None
-                ),
-                None,
-            )
+            display_class = None
+            for name in ("EPD", "EPD_7in5_V2", "EPD_7IN5_V2"):
+                candidate = getattr(epd7in5_V2, name, None)
+                if isinstance(candidate, type):
+                    display_class = candidate
+                    break
+
             if display_class is None:
+                # Fall back to capability-based discovery for local forks
+                # whose class name differs from Waveshare's examples.
+                for candidate in vars(epd7in5_V2).values():
+                    if (
+                        isinstance(candidate, type)
+                        and hasattr(candidate, "init")
+                        and hasattr(candidate, "display")
+                        and hasattr(candidate, "getbuffer")
+                    ):
+                        display_class = candidate
+                        break
+
+            if display_class is None:
+                available = ", ".join(
+                    name
+                    for name, candidate in vars(epd7in5_V2).items()
+                    if isinstance(candidate, type) and not name.startswith("_")
+                ) or "none"
                 raise RuntimeError(
-                    "The Waveshare 7.5in V2 driver does not expose an "
-                    "EPD or EPD_7in5_V2 class."
+                    "The Waveshare 7.5in V2 driver does not expose a compatible "
+                    f"display class ({available}); loaded {epd7in5_V2.__file__}."
                 )
             self._display = display_class()
         return self._display
