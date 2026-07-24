@@ -63,16 +63,3 @@ docker-pi-down:
 
 docker-pi-display:
 	$(PI_COMPOSE) run --rm plant-monitor python display_test.py
-
-# Backwards-compatible short aliases for the development container.
-build:
-	$(DEV_COMPOSE) build
-
-up:
-	$(DEV_COMPOSE) up
-
-up-d:
-	$(DEV_COMPOSE) up -d
-
-down:
-	$(DEV_COMPOSE) down
