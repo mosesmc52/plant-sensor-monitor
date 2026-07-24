@@ -1,6 +1,6 @@
-.PHONY: help install-dev run-dev display-dev test-dev \
+.PHONY: help install-dev run-dev run-dev-d display-dev test-dev \
 	docker-dev docker-dev-down docker-dev-display \
-	install-pi run-pi display-pi docker-pi docker-pi-down docker-pi-display \
+	install-pi run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
 	build up up-d down
 
 DOCKER_COMPOSE ?= docker compose
@@ -12,6 +12,7 @@ help:
 		'Development:' \
 		'  make install-dev         Install Python dependencies in Docker' \
 		'  make run-dev             Run the FastAPI server in Docker' \
+		'  make run-dev-d           Run the FastAPI server in Docker as a daemon' \
 		'  make display-dev         Render a development display preview in Docker' \
 		'  make test-dev            Compile-check the server code in Docker' \
 		'  make docker-dev          Build and run the development Docker service' \
@@ -20,6 +21,7 @@ help:
 		'Raspberry Pi:' \
 		'  make install-pi          Install dependencies in the Pi container' \
 		'  make run-pi              Run the FastAPI server in Docker on the Pi' \
+		'  make run-pi-d            Run the FastAPI server in Docker on the Pi as a daemon' \
 		'  make display-pi           Update the physical Waveshare display in Docker' \
 		'  make docker-pi           Build and run the Pi Docker service' \
 		'  make docker-pi-down      Stop the Pi Docker service' \
@@ -30,6 +32,9 @@ install-dev:
 
 run-dev:
 	$(DEV_COMPOSE) up --build
+
+run-dev-d:
+	$(DEV_COMPOSE) up --build -d
 
 display-dev:
 	$(DEV_COMPOSE) run --rm plant-monitor python display_test.py
@@ -51,6 +56,9 @@ install-pi:
 
 run-pi:
 	$(PI_COMPOSE) up --build
+
+run-pi-d:
+	$(PI_COMPOSE) up --build -d
 
 display-pi:
 	$(PI_COMPOSE) run --rm plant-monitor python display_test.py
