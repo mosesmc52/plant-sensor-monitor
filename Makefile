@@ -43,7 +43,7 @@ test-dev:
 	$(DEV_COMPOSE) run --rm plant-monitor python -m compileall -q api display exceptions models services vendor web main.py display_test.py
 
 build-dev:
-	$(DEV_COMPOSE) --build
+	$(DEV_COMPOSE) build
 
 down-dev:
 	$(DEV_COMPOSE) down
@@ -64,7 +64,7 @@ display-pi:
 	$(PI_COMPOSE) run --rm plant-monitor python display_test.py
 
 build-pi:
-	$(PI_COMPOSE) --build
+	$(PI_COMPOSE) build
 
 down-pi:
 	$(PI_COMPOSE) down
