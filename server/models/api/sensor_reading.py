@@ -40,12 +40,6 @@ class SensorReading(BaseModel):
         examples=[64],
     )
 
-    moisture_2_percent: int = Field(
-        ge=0,
-        le=100,
-        examples=[58],
-    )
-
     uptime_seconds: int = Field(
         ge=0,
         examples=[120],

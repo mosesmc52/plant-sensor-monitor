@@ -34,7 +34,6 @@ def receive_sensor_reading(
     print(f"Humidity: {reading.humidity_percent:.1f}%")
     print(f"Light: {reading.light_lux:.1f} lux")
     print(f"Moisture 1: {reading.moisture_1_percent}%")
-    print(f"Moisture 2: {reading.moisture_2_percent}%")
     print(f"Device uptime: {reading.uptime_seconds} seconds")
     print(f"Received at: {received_at.isoformat()}")
 
@@ -71,16 +70,11 @@ def process_sensor_data(
 
     del received_at
 
-    moisture_percent = min(
-        reading.moisture_1_percent,
-        reading.moisture_2_percent,
-    )
-    message = "Needs water" if moisture_percent < 30 else "I am healthy!"
+    message = "Needs water" if reading.moisture_1_percent < 30 else "I am healthy!"
     image = render_plant_screen(
         plant_name=reading.device_id,
         message=message,
         moisture_percent=reading.moisture_1_percent,
-        moisture_2_percent=reading.moisture_2_percent,
         temperature_f=reading.temperature_f,
         humidity_percent=reading.humidity_percent,
         light_lux=reading.light_lux,

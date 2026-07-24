@@ -14,21 +14,19 @@ const char* serverUrl =
 
 // -------------------- Device Configuration --------------------
 const char* deviceId = "Pesto";
+// Set to false to disable Wi-Fi and sensor POST requests.
+const bool postApiEnabled = false;
 const unsigned long postIntervalMs = 15000;
 unsigned long lastPostTime = 0;
 unsigned long readingNumber = 0;
 
 // -------------------- Pins --------------------
 const int moisturePin_1 = A0;
-const int moisturePin_2 = A1;
 
 // -------------------- Moisture Calibration --------------------
 // Replace these with values measured from your own sensors.
-const int moisture1DryValue = 850;
-const int moisture1WetValue = 350;
-
-const int moisture2DryValue = 850;
-const int moisture2WetValue = 350;
+const int moisture1DryValue = 2600;
+const int moisture1WetValue = 1400;
 
 // -------------------- Sensors --------------------
 BH1750 lightMeter;
@@ -66,14 +64,12 @@ ClimateData readClimate();
 void connectToWiFi();
 bool sendSensorData(
   int moisture1,
-  int moisture2,
   float lux,
   ClimateData climate
 );
 
 void displaySensorData(
   int moisture1,
-  int moisture2,
   float lux,
   ClimateData climate
 );
@@ -110,7 +106,9 @@ void setup() {
     Serial.println("Failed to initialize AHT20");
   }
 
-  connectToWiFi();
+  if (postApiEnabled) {
+    connectToWiFi();
+  }
 
   delay(1000);
   u8x8.clear();
@@ -119,23 +117,16 @@ void setup() {
 // ------------------------------------------------------------
 
 void loop() {
-  if (WiFi.status() != WL_CONNECTED) {
+  if (postApiEnabled && WiFi.status() != WL_CONNECTED) {
     connectToWiFi();
   }
 
   int rawMoisture1 = readMoistureSensor(moisturePin_1);
-  int rawMoisture2 = readMoistureSensor(moisturePin_2);
 
   int moisture1 = moisturePercent(
     rawMoisture1,
     moisture1DryValue,
     moisture1WetValue
-  );
-
-  int moisture2 = moisturePercent(
-    rawMoisture2,
-    moisture2DryValue,
-    moisture2WetValue
   );
 
   float lux = readLightSensor();
@@ -151,13 +142,6 @@ void loop() {
   Serial.print(getMoistureCondition(moisture1));
   Serial.print("), Raw: ");
   Serial.println(rawMoisture1);
-
-  Serial.print("Moisture 2: ");
-  Serial.print(moisture2);
-  Serial.print("% (");
-  Serial.print(getMoistureCondition(moisture2));
-  Serial.print("), Raw: ");
-  Serial.println(rawMoisture2);
 
   if (lightSensorAvailable && lux >= 0) {
     Serial.print("Light: ");
@@ -185,18 +169,19 @@ void loop() {
 
   displaySensorData(
     moisture1,
-    moisture2,
     lux,
     climate
   );
 
-  unsigned long currentTime = millis();
-  if (
-    lastPostTime == 0 ||
-    currentTime - lastPostTime >= postIntervalMs
-  ) {
-    lastPostTime = currentTime;
-    sendSensorData(moisture1, moisture2, lux, climate);
+  if (postApiEnabled) {
+    unsigned long currentTime = millis();
+    if (
+      lastPostTime == 0 ||
+      currentTime - lastPostTime >= postIntervalMs
+    ) {
+      lastPostTime = currentTime;
+      sendSensorData(moisture1, lux, climate);
+    }
   }
 
   delay(1000);
@@ -239,7 +224,6 @@ void connectToWiFi() {
 
 bool sendSensorData(
   int moisture1,
-  int moisture2,
   float lux,
   ClimateData climate
 ) {
@@ -281,8 +265,6 @@ bool sendSensorData(
   jsonPayload += String(light, 1);
   jsonPayload += ",\"moisture_1_percent\":";
   jsonPayload += String(moisture1);
-  jsonPayload += ",\"moisture_2_percent\":";
-  jsonPayload += String(moisture2);
   jsonPayload += ",\"uptime_seconds\":";
   jsonPayload += String(millis() / 1000);
   jsonPayload += "}";
@@ -404,7 +386,6 @@ ClimateData readClimate() {
 
 void displaySensorData(
   int moisture1,
-  int moisture2,
   float lux,
   ClimateData climate
 ) {
@@ -423,17 +404,9 @@ void displaySensorData(
   u8x8.print("% ");
   u8x8.print(getMoistureCondition(moisture1));
 
-  // Row 2: moisture sensor 2
+  // Row 2: light value
   u8x8.clearLine(2);
   u8x8.setCursor(0, 2);
-  u8x8.print("M2:");
-  u8x8.print(moisture2);
-  u8x8.print("% ");
-  u8x8.print(getMoistureCondition(moisture2));
-
-  // Row 3: light value
-  u8x8.clearLine(3);
-  u8x8.setCursor(0, 3);
   u8x8.print("Light:");
 
   if (lightSensorAvailable && lux >= 0) {
@@ -443,9 +416,9 @@ void displaySensorData(
     u8x8.print("ERROR");
   }
 
-  // Row 4: light condition
-  u8x8.clearLine(4);
-  u8x8.setCursor(0, 4);
+  // Row 3: light condition
+  u8x8.clearLine(3);
+  u8x8.setCursor(0, 3);
   u8x8.print("Level:");
 
   if (lightSensorAvailable && lux >= 0) {
@@ -454,9 +427,9 @@ void displaySensorData(
     u8x8.print("ERROR");
   }
 
-  // Row 5: temperature
-  u8x8.clearLine(5);
-  u8x8.setCursor(0, 5);
+  // Row 4: temperature
+  u8x8.clearLine(4);
+  u8x8.setCursor(0, 4);
   u8x8.print("Temp:");
 
   if (climateSensorAvailable) {
@@ -466,9 +439,9 @@ void displaySensorData(
     u8x8.print("ERROR");
   }
 
-  // Row 6: humidity
-  u8x8.clearLine(6);
-  u8x8.setCursor(0, 6);
+  // Row 5: humidity
+  u8x8.clearLine(5);
+  u8x8.setCursor(0, 5);
   u8x8.print("Hum:");
 
   if (climateSensorAvailable) {
