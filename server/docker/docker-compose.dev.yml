@@ -1,0 +1,15 @@
+services:
+  plant-monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "8000:8000"
+
+    environment:
+      DISPLAY_BACKEND: preview
+
+    volumes:
+      - ..:/app
+
+    restart: unless-stopped

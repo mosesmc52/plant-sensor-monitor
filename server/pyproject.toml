@@ -1,20 +1,23 @@
 [tool.poetry]
 name = "plant-sensor-monitor"
 version = "0.1.0"
-description = ""
+description = "Plant sensor server and e-ink display monitor"
 authors = ["Moses McCall <mosesmc52@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
 fastapi = "^0.139.2"
-uvicorn = "^0.51.0"
+uvicorn = { version = "^0.51.0", extras = ["standard"] }
 pillow = "^12.3.0"
 jinja2 = "^3.1.6"
 python-multipart = "^0.0.32"
 sqlalchemy = "^2.0.51"
 
+# Raspberry Pi-only dependencies
+gpiozero = { version = "^2.0.1", markers = "sys_platform == 'linux'" }
+spidev = { version = "^3.8", markers = "sys_platform == 'linux'" }
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

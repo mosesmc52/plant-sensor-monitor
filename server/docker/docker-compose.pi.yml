@@ -1,0 +1,17 @@
+services:
+  plant-monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.pi
+    ports:
+      - "8000:8000"
+    environment:
+      DISPLAY_BACKEND: waveshare
+    volumes:
+      - ..:/app
+    # The Waveshare driver needs access to SPI and GPIO on the Pi.
+    privileged: true
+    devices:
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/gpiomem:/dev/gpiomem
+    restart: unless-stopped
