@@ -5,8 +5,8 @@
 // -------------------- Wi-Fi Configuration --------------------
 // ssh basil@greenhouse.local // password
 
-const char* wifiSsid = "Verizon_F3JP4G";
-const char* wifiPassword = "then7detain2cod";
+const char* wifiSsid = "";
+const char* wifiPassword = "";
 
 // Replace with the Raspberry Pi's IP address or hostname.
 // const char* serverUrl =
