@@ -217,3 +217,8 @@ def render_plant_dashboard(
         _draw_panel(image, plant, x, y, panel_width, panel_height)
 
     return image
+
+
+def render_blank_display() -> Image.Image:
+    """Render an all-white image used to reset the e-ink display."""
+    return Image.new("1", (DISPLAY_WIDTH, DISPLAY_HEIGHT), 255)

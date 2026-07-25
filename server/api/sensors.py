@@ -9,7 +9,11 @@ from typing import Any
 from fastapi import APIRouter, status
 
 from display.display import create_display
-from display.renderer import PlantPanelData, render_plant_dashboard
+from display.renderer import (
+    PlantPanelData,
+    render_blank_display,
+    render_plant_dashboard,
+)
 from models.api.sensor_reading import SensorReading
 
 
@@ -52,6 +56,33 @@ class PlantDisplayState:
 
 _latest_plants: dict[str, PlantDisplayState] = {}
 _last_render_signature: tuple[tuple[str, str, int], ...] | None = None
+
+
+def reset_display() -> bool:
+    """Clear the display and discard readings from a previous server run."""
+    global _last_render_signature
+
+    with _state_lock:
+        _latest_plants.clear()
+        _last_render_signature = None
+
+    image = render_blank_display()
+
+    with _display_lock:
+        display = create_display()
+        try:
+            display.initialize()
+            display.show(image)
+        except Exception as exc:
+            print(f"Display reset failed: {exc}")
+            return False
+        finally:
+            try:
+                display.shutdown()
+            except Exception as exc:
+                print(f"Display cleanup failed: {exc}")
+
+    return True
 
 
 def _env_float(name: str, default: float) -> float:
@@ -224,8 +255,6 @@ def process_sensor_data(
         if signature == _last_render_signature:
             return False
 
-        _last_render_signature = signature
-
     image = render_plant_dashboard(
         plants=[
             PlantPanelData(
@@ -251,5 +280,8 @@ def process_sensor_data(
                 display.shutdown()
             except Exception as exc:
                 print(f"Display cleanup failed: {exc}")
+
+    with _state_lock:
+        _last_render_signature = signature
 
     return True
