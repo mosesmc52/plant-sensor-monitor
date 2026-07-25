@@ -14,7 +14,7 @@ FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CHARACTER_DIRECTORY = PROJECT_ROOT / "assets" / "characters"
+CHARACTER_DIRECTORY = PROJECT_ROOT / "server" / "assets" / "characters"
 
 
 @dataclass(frozen=True)

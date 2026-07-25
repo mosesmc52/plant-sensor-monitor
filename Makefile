@@ -1,6 +1,7 @@
 .PHONY: help install-dev run-dev run-dev-d display-dev test-dev \
-	docker-dev docker-dev-down docker-dev-display \
+	docker-dev docker-dev-down docker-dev-display logs-dev \
 	install-pi run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
+	logs-pi \
 	build up up-d down
 
 DOCKER_COMPOSE ?= docker compose
@@ -17,6 +18,7 @@ help:
 		'  make test-dev            Compile-check the server code in Docker' \
 		'  make docker-dev          Build and run the development Docker service' \
 		'  make docker-dev-down     Stop the development Docker service' \
+		'  make logs-dev             Follow development Docker logs' \
 		'' \
 		'Raspberry Pi:' \
 		'  make install-pi          Install dependencies in the Pi container' \
@@ -25,6 +27,7 @@ help:
 		'  make display-pi           Update the physical Waveshare display in Docker' \
 		'  make docker-pi           Build and run the Pi Docker service' \
 		'  make docker-pi-down      Stop the Pi Docker service' \
+		'  make logs-pi              Follow Raspberry Pi Docker logs' \
 		'  make docker-pi-display   Update the display from the Pi container'
 
 install-dev:
@@ -51,6 +54,9 @@ down-dev:
 docker-dev-display:
 	$(DEV_COMPOSE) run --rm plant-monitor python display_test.py
 
+logs-dev:
+	$(DEV_COMPOSE) logs -f plant-monitor
+
 install-pi:
 	$(PI_COMPOSE) run --build --rm plant-monitor poetry install --no-root
 
@@ -71,3 +77,6 @@ down-pi:
 
 docker-pi-display:
 	$(PI_COMPOSE) run --rm plant-monitor python display_test.py
+
+logs-pi:
+	$(PI_COMPOSE) logs -f plant-monitor
