@@ -163,7 +163,12 @@ def _draw_panel(
     image_height = max(40, image_bottom - image_top)
     image_width = max(40, width - padding * 2)
 
-    character.thumbnail((image_width, image_height))
+    # Keep the complete character inside the panel. The source assets are
+    # portrait-oriented and must be scaled to the available panel area.
+    character.thumbnail(
+        (image_width, image_height),
+        resample=Image.Resampling.LANCZOS,
+    )
     character_x = x + (width - character.width) // 2
     character_y = image_top + (image_height - character.height) // 2
     canvas.paste(character, (character_x, character_y))

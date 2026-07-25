@@ -19,7 +19,7 @@ const char* serverUrl =
 const char* deviceId = "Pesto";
 
 // Send one reading every 5 seconds.
-const unsigned long postIntervalMs = 15000;
+const unsigned long postIntervalMs = 10000;
 
 // Built-in LED used as the transmission indicator.
 #ifndef LED_BUILTIN
