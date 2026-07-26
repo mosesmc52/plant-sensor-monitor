@@ -1,12 +1,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <math.h>
+#include "wifi_config.h"
 
 // -------------------- Wi-Fi Configuration --------------------
-// ssh basil@greenhouse.local // password
-
-const char* wifiSsid = "";
-const char* wifiPassword = "";
 
 // Replace with the Raspberry Pi's IP address or hostname.
 // const char* serverUrl =
@@ -30,6 +28,13 @@ const int statusLedPin = LED_BUILTIN;
 
 unsigned long lastPostTime = 0;
 unsigned long readingNumber = 0;
+unsigned long simulationStartTime = 0;
+
+const float twoPi = 6.28318530718;
+const unsigned long moistureCycleDurationMs = 60UL * 60UL * 1000UL;
+const unsigned long temperatureCycleDurationMs = 30UL * 60UL * 1000UL;
+const unsigned long humidityCycleDurationMs = 45UL * 60UL * 1000UL;
+const unsigned long lightCycleDurationMs = 20UL * 60UL * 1000UL;
 
 // -------------------- Simulated Data --------------------
 
@@ -38,7 +43,6 @@ struct SensorData {
   float humidityPercent;
   float lightLux;
   int moisture1Percent;
-  int moisture2Percent;
 };
 
 // -------------------- Function Prototypes --------------------
@@ -54,9 +58,6 @@ SensorData generateSimulatedData();
 bool sendSensorData(const SensorData& data);
 void printSensorData(const SensorData& data);
 
-float randomFloat(float minimum, float maximum);
-float clampFloat(float value, float minimum, float maximum);
-int clampInt(int value, int minimum, int maximum);
 
 // ------------------------------------------------------------
 
@@ -72,7 +73,7 @@ void setup() {
   Serial.println();
   Serial.println("Plant sensor simulator starting...");
 
-  randomSeed(micros());
+  simulationStartTime = millis();
 
   connectToWiFi();
 }
@@ -175,58 +176,40 @@ void connectToWiFi() {
 // -------------------- Simulated Sensor Data --------------------
 
 SensorData generateSimulatedData() {
-  static float temperatureF = 72.0;
-  static float humidityPercent = 52.0;
-  static float lightLux = 450.0;
-  static int moisture1Percent = 64;
-  static int moisture2Percent = 58;
+  unsigned long elapsedMs = millis() - simulationStartTime;
 
-  temperatureF += randomFloat(-0.4, 0.4);
-  humidityPercent += randomFloat(-1.0, 1.0);
-  lightLux += randomFloat(-40.0, 40.0);
+  // Temperature, humidity, and light smoothly oscillate within their
+  // configured ranges instead of changing randomly between readings.
+  float temperaturePhase = twoPi * (
+    static_cast<float>(elapsedMs % temperatureCycleDurationMs) /
+    temperatureCycleDurationMs
+  );
+  float humidityPhase = twoPi * (
+    static_cast<float>(elapsedMs % humidityCycleDurationMs) /
+    humidityCycleDurationMs
+  );
+  float lightPhase = twoPi * (
+    static_cast<float>(elapsedMs % lightCycleDurationMs) /
+    lightCycleDurationMs
+  );
 
-  moisture1Percent -= random(0, 2);
-  moisture2Percent -= random(0, 2);
+  float temperatureF = 75.0 + 10.0 * sin(temperaturePhase);
+  float humidityPercent = 55.0 + 25.0 * sin(humidityPhase);
+  float lightLux = 1000.0 + 1000.0 * sin(lightPhase);
 
-  if (moisture1Percent < 25) {
-    moisture1Percent = random(70, 91);
-    Serial.println("Simulation: plant 1 was watered.");
+  // Moisture drains steadily from maximum to the low threshold over one
+  // hour. At the end of the cycle it jumps back to maximum, simulating
+  // watering after the plant needs water.
+  unsigned long moistureElapsedMs = elapsedMs % moistureCycleDurationMs;
+  float moistureProgress = static_cast<float>(moistureElapsedMs) /
+    moistureCycleDurationMs;
+  int moisture1Percent = static_cast<int>(
+    90.0 - (65.0 * moistureProgress)
+  );
+
+  if (moistureElapsedMs < postIntervalMs) {
+    Serial.println("Simulation: plant was watered; moisture reset to maximum.");
   }
-
-  if (moisture2Percent < 25) {
-    moisture2Percent = random(70, 91);
-    Serial.println("Simulation: plant 2 was watered.");
-  }
-
-  temperatureF = clampFloat(
-    temperatureF,
-    65.0,
-    85.0
-  );
-
-  humidityPercent = clampFloat(
-    humidityPercent,
-    30.0,
-    80.0
-  );
-
-  lightLux = clampFloat(
-    lightLux,
-    0.0,
-    2000.0
-  );
-
-  moisture1Percent = clampInt(
-    moisture1Percent,
-    0,
-    100
-  );
-
-  moisture2Percent = clampInt(
-    moisture2Percent,
-    0,
-    100
-  );
 
   SensorData data;
 
@@ -234,7 +217,6 @@ SensorData generateSimulatedData() {
   data.humidityPercent = humidityPercent;
   data.lightLux = lightLux;
   data.moisture1Percent = moisture1Percent;
-  data.moisture2Percent = moisture2Percent;
 
   return data;
 }
@@ -281,10 +263,6 @@ bool sendSensorData(const SensorData& data) {
 
   jsonPayload += "\"moisture_1_percent\":";
   jsonPayload += String(data.moisture1Percent);
-  jsonPayload += ",";
-
-  jsonPayload += "\"moisture_2_percent\":";
-  jsonPayload += String(data.moisture2Percent);
   jsonPayload += ",";
 
   jsonPayload += "\"uptime_seconds\":";
@@ -347,51 +325,4 @@ void printSensorData(const SensorData& data) {
   Serial.print(data.moisture1Percent);
   Serial.println(" %");
 
-  Serial.print("Moisture 2: ");
-  Serial.print(data.moisture2Percent);
-  Serial.println(" %");
-}
-
-// -------------------- Utilities --------------------
-
-float randomFloat(float minimum, float maximum) {
-  long randomValue = random(0, 10001);
-
-  float normalizedValue =
-    static_cast<float>(randomValue) / 10000.0;
-
-  return minimum +
-    normalizedValue * (maximum - minimum);
-}
-
-float clampFloat(
-  float value,
-  float minimum,
-  float maximum
-) {
-  if (value < minimum) {
-    return minimum;
-  }
-
-  if (value > maximum) {
-    return maximum;
-  }
-
-  return value;
-}
-
-int clampInt(
-  int value,
-  int minimum,
-  int maximum
-) {
-  if (value < minimum) {
-    return minimum;
-  }
-
-  if (value > maximum) {
-    return maximum;
-  }
-
-  return value;
 }

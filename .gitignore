@@ -150,6 +150,7 @@ activemq-data/
 # Environments
 .env
 .envrc
+firmware/plant_sensor_node_simulator/wifi_config.h
 .venv
 env/
 venv/
