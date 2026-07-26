@@ -1,6 +1,6 @@
 .PHONY: help install-dev run-dev run-dev-d display-dev test-dev \
 	docker-dev docker-dev-down docker-dev-display logs-dev \
-	install-pi run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
+	install-pi install-pi-service enable-pi-service disable-pi-service run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
 	logs-pi \
 	build up up-d down
 
@@ -22,6 +22,9 @@ help:
 		'' \
 		'Raspberry Pi:' \
 		'  make install-pi          Install dependencies in the Pi container' \
+		'  make install-pi-service  Install and enable the boot-time systemd service' \
+		'  make enable-pi-service   Enable and start the Pi systemd service' \
+		'  make disable-pi-service  Stop and disable the Pi systemd service' \
 		'  make run-pi              Run the FastAPI server in Docker on the Pi' \
 		'  make run-pi-d            Run the FastAPI server in Docker on the Pi as a daemon' \
 		'  make display-pi           Update the physical Waveshare display in Docker' \
@@ -59,6 +62,15 @@ logs-dev:
 
 install-pi:
 	$(PI_COMPOSE) run --build --rm plant-monitor poetry install --no-root
+
+install-pi-service:
+	./scripts/install_plant_monitor_service.sh
+
+enable-pi-service:
+	sudo systemctl enable --now plant-monitor.service
+
+disable-pi-service:
+	sudo systemctl disable --now plant-monitor.service
 
 up-pi:
 	$(PI_COMPOSE) up

@@ -1,19 +1,47 @@
 services:
   plant-monitor:
+    container_name: plant-monitor
+
     build:
       context: ..
       dockerfile: docker/Dockerfile.pi
+
+    restart: unless-stopped
+    init: true
+
     ports:
       - "8000:8000"
+
     environment:
       DISPLAY_BACKEND: waveshare
       GPIOZERO_PIN_FACTORY: lgpio
-    volumes:
-      - ..:/app
-    # The Waveshare driver needs access to SPI and GPIO on the Pi.
+      PYTHONUNBUFFERED: "1"
+
+    # The Waveshare driver needs SPI and GPIO access.
     privileged: true
+
     devices:
       - /dev/spidev0.0:/dev/spidev0.0
       - /dev/gpiochip0:/dev/gpiochip0
       - /dev/gpiomem:/dev/gpiomem
-    restart: unless-stopped
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    stop_grace_period: 20s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

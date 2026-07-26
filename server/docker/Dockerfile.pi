@@ -1,29 +1,51 @@
 FROM python:3.12-slim
 
-ENV POETRY_VERSION=2.1.3
-ENV PYTHONDONTWRITEBYTECODE=1 \
+ENV POETRY_VERSION=2.1.3 \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    POETRY_NO_INTERACTION=1
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false
 
-RUN apt-get update && apt-get install -y \
-    gcc \
-    python3-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    fonts-dejavu-core \
- && rm -rf /var/lib/apt/lists/*
+# Build requirements for Pillow, spidev, and lgpio,
+# plus fonts used by the e-ink renderer.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+        make \
+        swig \
+        python3-dev \
+        libjpeg-dev \
+        zlib1g-dev \
+        fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
+RUN pip install \
+    --no-cache-dir \
+    "poetry==$POETRY_VERSION"
 
 WORKDIR /app
 
+# Copy dependency files first so Docker can cache installation.
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.create false \
- && poetry install --no-root
+RUN poetry install \
+    --only main \
+    --no-root \
+    --no-ansi
 
+# Copy application code and assets.
 COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD [
+    "python",
+    "-m",
+    "uvicorn",
+    "main:app",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8000"
+]
