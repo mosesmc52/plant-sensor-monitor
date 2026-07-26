@@ -1,0 +1,7 @@
+#ifndef WIFI_CONFIG_H
+#define WIFI_CONFIG_H
+
+const char* wifiSsid = "your-wifi-name";
+const char* wifiPassword = "your-wifi-password";
+
+#endif

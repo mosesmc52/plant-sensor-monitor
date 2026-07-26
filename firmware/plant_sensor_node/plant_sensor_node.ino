@@ -5,10 +5,9 @@
 #include <BH1750.h>
 #include <Adafruit_AHTX0.h>
 #include <U8x8lib.h>
+#include "wifi_config.h"
 
 // -------------------- Wi-Fi Configuration --------------------
-const char* wifiSsid = "";
-const char* wifiPassword = "";
 const char* serverUrl =
   "http://greenhouse.local:8000/api/v1/readings";
 

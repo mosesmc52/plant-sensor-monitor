@@ -49,13 +49,17 @@ View service logs with:
 journalctl -u plant-monitor.service -f
 ```
 
-## Simulator Wi-Fi credentials
+## Firmware Wi-Fi credentials
 
-Keep simulator credentials out of GitHub. Create the local configuration
-header from the example, then edit it with your Wi-Fi details:
+Keep firmware credentials out of GitHub. For each firmware project, create the
+local configuration header from its example, then edit it with your Wi-Fi
+details:
 
 ```bash
 cd firmware/plant_sensor_node_simulator
+cp wifi_config.h.example wifi_config.h
+
+cd ../plant_sensor_node
 cp wifi_config.h.example wifi_config.h
 ```
 
