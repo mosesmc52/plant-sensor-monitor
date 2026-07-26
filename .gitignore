@@ -219,3 +219,4 @@ __marimo__/
 
 # Track this project-specific module despite the global handlers.py ignore rule.
 !server/exceptions/handlers.py
+server/output/

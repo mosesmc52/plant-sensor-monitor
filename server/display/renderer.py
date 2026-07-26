@@ -13,8 +13,7 @@ DISPLAY_HEIGHT = 480
 FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CHARACTER_DIRECTORY = PROJECT_ROOT / "server" / "assets" / "characters"
+CHARACTER_DIRECTORY = Path(__file__).resolve().parents[1] / "assets" / "characters"
 
 
 @dataclass(frozen=True)
@@ -52,7 +51,21 @@ def _load_character(state: str) -> Image.Image:
         else:
             return _placeholder_character(state)
 
-    return Image.open(path).convert("1")
+    # The character PNGs contain a transparent, gray-gradient backdrop. If
+    # converted directly to 1-bit, transparent pixels become black and the
+    # backdrop appears as noise on the e-ink display. Composite onto white
+    # before converting to monochrome.
+    character = Image.open(path).convert("RGBA")
+    # The source canvas also contains transparent margins around the artwork.
+    # Remove them so the visible character, rather than the source canvas, is
+    # centered in the dashboard panel.
+    alpha = character.getchannel("A")
+    artwork_bounds = alpha.point(lambda value: 255 if value > 8 else 0).getbbox()
+    if artwork_bounds is not None:
+        character = character.crop(artwork_bounds)
+
+    white_background = Image.new("RGBA", character.size, (255, 255, 255, 255))
+    return Image.alpha_composite(white_background, character).convert("1")
 
 
 def _placeholder_character(state: str) -> Image.Image:
@@ -77,7 +90,7 @@ def _panel_grid(plant_count: int) -> tuple[int, int]:
     if plant_count <= 4:
         return 2, 2
 
-    columns = min(4, ceil(plant_count ** 0.5))
+    columns = min(4, ceil(plant_count**0.5))
     rows = ceil(plant_count / columns)
     return columns, rows
 
@@ -158,7 +171,7 @@ def _draw_panel(
     character = _load_character(plant.state).copy()
 
     health_area_height = 48 if compact else 60
-    image_top = y + 50
+    image_top = y + 100
     image_bottom = y + height - health_area_height - 12
     image_height = max(40, image_bottom - image_top)
     image_width = max(40, width - padding * 2)
@@ -175,7 +188,7 @@ def _draw_panel(
 
     bar_x = x + padding
     bar_width = width - padding * 2
-    bar_height = 16 if compact else 20
+    bar_height = 8 if compact else 12
     bar_y = y + height - bar_height - 14
 
     _draw_health_bar(
@@ -207,12 +220,8 @@ def render_plant_dashboard(
     margin = 10
     gap = 8
 
-    panel_width = (
-        DISPLAY_WIDTH - margin * 2 - gap * (columns - 1)
-    ) // columns
-    panel_height = (
-        DISPLAY_HEIGHT - margin * 2 - gap * (rows - 1)
-    ) // rows
+    panel_width = (DISPLAY_WIDTH - margin * 2 - gap * (columns - 1)) // columns
+    panel_height = (DISPLAY_HEIGHT - margin * 2 - gap * (rows - 1)) // rows
 
     for index, plant in enumerate(visible_plants):
         row = index // columns
