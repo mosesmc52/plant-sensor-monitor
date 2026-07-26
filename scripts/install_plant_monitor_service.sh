@@ -27,7 +27,6 @@ fi
 
 "${sudo_command[@]}" install -m 0644 "$service_source" "$service_target"
 "${sudo_command[@]}" systemctl daemon-reload
-"${sudo_command[@]}" systemctl enable --now "$service_name"
 
-printf 'Installed and started %s\n' "$service_name"
-printf 'View logs with: journalctl -u %s -f\n' "$service_name"
+printf 'Installed %s (disabled by default)\n' "$service_name"
+printf 'Enable and start it with: make enable-pi-service\n'

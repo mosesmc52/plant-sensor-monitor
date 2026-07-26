@@ -36,6 +36,13 @@ cd /home/basil/plant-sensor-monitor
 ./scripts/install_plant_monitor_service.sh
 ```
 
+The service is disabled by default. Enable and start it explicitly when
+needed:
+
+```bash
+make enable-pi-service
+```
+
 View service logs with:
 
 ```bash

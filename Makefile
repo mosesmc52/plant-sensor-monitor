@@ -22,7 +22,7 @@ help:
 		'' \
 		'Raspberry Pi:' \
 		'  make install-pi          Install dependencies in the Pi container' \
-		'  make install-pi-service  Install and enable the boot-time systemd service' \
+		'  make install-pi-service  Install the disabled systemd service' \
 		'  make enable-pi-service   Enable and start the Pi systemd service' \
 		'  make disable-pi-service  Stop and disable the Pi systemd service' \
 		'  make run-pi              Run the FastAPI server in Docker on the Pi' \
