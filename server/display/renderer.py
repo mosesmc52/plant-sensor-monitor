@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 from math import ceil
@@ -21,6 +22,14 @@ class PlantPanelData:
     plant_name: str
     state: str
     health_percent: int
+    temperature_f: float | None = None
+    moisture_percent: int | None = None
+    light_lux: float | None = None
+
+
+def _display_sensor_stats() -> bool:
+    value = os.getenv("DISPLAY_SENSOR_STATS", "true").strip().lower()
+    return value not in {"0", "false", "no", "off"}
 
 
 def _load_font(path: str, size: int) -> ImageFont.ImageFont:
@@ -168,10 +177,31 @@ def _draw_panel(
         fill=0,
     )
 
+    has_metrics = _display_sensor_stats() and (
+        plant.temperature_f is not None
+        and plant.moisture_percent is not None
+        and plant.light_lux is not None
+    )
+    if has_metrics:
+        metrics_font = _load_font(FONT_REGULAR, 11 if compact else 14)
+        metric_lines = (
+            f"Temperature: {plant.temperature_f:.1f}°F",
+            f"Moisture: {plant.moisture_percent}%",
+            f"Light: {plant.light_lux:.0f} lx",
+        )
+        metric_line_height = 13 if compact else 18
+        for line_number, metric in enumerate(metric_lines):
+            draw.text(
+                (x + padding, y + 36 + line_number * metric_line_height),
+                metric,
+                font=metrics_font,
+                fill=0,
+            )
+
     character = _load_character(plant.state).copy()
 
     health_area_height = 48 if compact else 60
-    image_top = y + 100
+    image_top = y + (79 if compact else 100) if has_metrics else y + 60
     image_bottom = y + height - health_area_height - 12
     image_height = max(40, image_bottom - image_top)
     image_width = max(40, width - padding * 2)

@@ -52,10 +52,15 @@ class PlantDisplayState:
     plant_name: str
     state: str
     health_percent: int
+    temperature_f: float
+    moisture_percent: int
+    light_lux: float
 
 
 _latest_plants: dict[str, PlantDisplayState] = {}
-_last_render_signature: tuple[tuple[str, str, int], ...] | None = None
+_last_render_signature: tuple[
+    tuple[str, str, int, float, int, float], ...
+] | None = None
 
 
 def reset_display() -> bool:
@@ -185,9 +190,16 @@ def _calculate_health(
 
 def _render_signature(
     plants: list[PlantDisplayState],
-) -> tuple[tuple[str, str, int], ...]:
+) -> tuple[tuple[str, str, int, float, int, float], ...]:
     return tuple(
-        (plant.plant_name, plant.state, plant.health_percent)
+        (
+            plant.plant_name,
+            plant.state,
+            plant.health_percent,
+            plant.temperature_f,
+            plant.moisture_percent,
+            plant.light_lux,
+        )
         for plant in plants
     )
 
@@ -242,6 +254,9 @@ def process_sensor_data(
         plant_name=plant_name,
         state=_determine_state(reading, thresholds),
         health_percent=_calculate_health(reading, thresholds),
+        temperature_f=reading.temperature_f,
+        moisture_percent=reading.moisture_1_percent,
+        light_lux=reading.light_lux,
     )
 
     with _state_lock:
@@ -261,6 +276,9 @@ def process_sensor_data(
                 plant_name=plant.plant_name,
                 state=plant.state,
                 health_percent=plant.health_percent,
+                temperature_f=plant.temperature_f,
+                moisture_percent=plant.moisture_percent,
+                light_lux=plant.light_lux,
             )
             for plant in plants
         ],
