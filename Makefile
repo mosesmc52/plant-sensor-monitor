@@ -103,6 +103,7 @@ install-pi-access-point:
 
 enable-pi-access-point:
 	sudo nmcli radio wifi on
+	sudo nmcli device set "$${AP_INTERFACE:-wlan0}" managed yes
 	sudo nmcli connection up id "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" ifname "$${AP_INTERFACE:-wlan0}"
 
 disable-pi-access-point:
