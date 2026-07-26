@@ -1,7 +1,7 @@
 .PHONY: help install-dev run-dev run-dev-d display-dev test-dev \
 	docker-dev docker-dev-down docker-dev-display logs-dev \
 	install-pi install-pi-service enable-pi-service disable-pi-service run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
-	logs-pi \
+	logs-pi install-pi-access-point enable-pi-access-point disable-pi-access-point \
 	build up up-d down
 
 DOCKER_COMPOSE ?= docker compose
@@ -31,6 +31,9 @@ help:
 		'  make docker-pi           Build and run the Pi Docker service' \
 		'  make docker-pi-down      Stop the Pi Docker service' \
 		'  make logs-pi              Follow Raspberry Pi Docker logs' \
+		'  make install-pi-access-point Install the disabled Wi-Fi access point' \
+		'  make enable-pi-access-point  Enable the Pi access point' \
+		'  make disable-pi-access-point Disable the Pi access point' \
 		'  make docker-pi-display   Update the display from the Pi container'
 
 install-dev:
@@ -92,3 +95,12 @@ docker-pi-display:
 
 logs-pi:
 	$(PI_COMPOSE) logs -f plant-monitor
+
+install-pi-access-point:
+	./scripts/install_plant_monitor_access_point.sh
+
+enable-pi-access-point:
+	sudo nmcli connection up id "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" ifname "$${AP_INTERFACE:-wlan0}"
+
+disable-pi-access-point:
+	sudo nmcli connection down id "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" || true

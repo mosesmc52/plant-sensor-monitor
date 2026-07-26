@@ -66,3 +66,28 @@ cp wifi_config.h.example wifi_config.h
 The real `wifi_config.h` is ignored by Git. If the old credentials were ever
 uploaded, rotate that Wi-Fi password because removing it from the latest file
 does not remove it from Git history.
+
+## Raspberry Pi local access point
+
+The Pi can provide a local Wi-Fi network for the sensor microcontroller. On
+current Raspberry Pi OS releases, the setup uses NetworkManager, which is the
+default network manager from Bookworm onward.
+
+Install the access-point profile. It is disabled by default:
+
+```bash
+make install-pi-access-point
+```
+
+The installer prompts for the access-point password. You can optionally set
+`AP_SSID`, `AP_PASSWORD`, `AP_INTERFACE`, and `AP_ADDRESS` before running it.
+
+Enable or disable the access point with:
+
+```bash
+make enable-pi-access-point
+make disable-pi-access-point
+```
+
+The default Pi address is `192.168.50.1`. Set the sensor firmware `serverUrl`
+to `http://192.168.50.1:8000/api/v1/readings` when using this local network.
