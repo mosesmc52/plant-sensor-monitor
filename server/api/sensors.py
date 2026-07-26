@@ -6,16 +6,14 @@ from datetime import datetime, timezone
 from threading import Lock
 from typing import Any
 
-from fastapi import APIRouter, status
-
 from display.display import create_display
 from display.renderer import (
     PlantPanelData,
     render_blank_display,
     render_plant_dashboard,
 )
+from fastapi import APIRouter, status
 from models.api.sensor_reading import SensorReading
-
 
 router = APIRouter(tags=["Sensors"])
 _display_lock = Lock()
@@ -41,7 +39,7 @@ class PlantThresholds:
             temperature_low_f=_env_float("PLANT_TEMPERATURE_LOW_F", 55.0),
             temperature_high_f=_env_float("PLANT_TEMPERATURE_HIGH_F", 90.0),
             humidity_low=_env_float("PLANT_HUMIDITY_LOW_PERCENT", 30.0),
-            humidity_high=_env_float("PLANT_HUMIDITY_HIGH_PERCENT", 80.0),
+            humidity_high=_env_float("PLANT_HUMIDITY_HIGH_PERCENT", 75.0),
             light_low_lux=_env_float("PLANT_LIGHT_LOW_LUX", 100.0),
             light_high_lux=_env_float("PLANT_LIGHT_HIGH_LUX", 10_000.0),
         )
@@ -58,9 +56,9 @@ class PlantDisplayState:
 
 
 _latest_plants: dict[str, PlantDisplayState] = {}
-_last_render_signature: tuple[
-    tuple[str, str, int, float, int, float], ...
-] | None = None
+_last_render_signature: tuple[tuple[str, str, int, float, int, float], ...] | None = (
+    None
+)
 
 
 def reset_display() -> bool:
@@ -99,8 +97,7 @@ def _env_float(name: str, default: float) -> float:
         return float(raw_value)
     except ValueError as exc:
         raise RuntimeError(
-            f"Environment variable {name} must be numeric; "
-            f"received {raw_value!r}."
+            f"Environment variable {name} must be numeric; " f"received {raw_value!r}."
         ) from exc
 
 
