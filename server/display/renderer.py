@@ -192,7 +192,7 @@ def _draw_panel(
         metric_line_height = 13 if compact else 18
         for line_number, metric in enumerate(metric_lines):
             draw.text(
-                (x + padding, y + 36 + line_number * metric_line_height),
+                (x + padding, y + 44 + line_number * metric_line_height),
                 metric,
                 font=metrics_font,
                 fill=0,
@@ -201,7 +201,7 @@ def _draw_panel(
     character = _load_character(plant.state).copy()
 
     health_area_height = 48 if compact else 60
-    image_top = y + (79 if compact else 100) if has_metrics else y + 60
+    image_top = y + (87 if compact else 108) if has_metrics else y + 60
     image_bottom = y + height - health_area_height - 12
     image_height = max(40, image_bottom - image_top)
     image_width = max(40, width - padding * 2)
