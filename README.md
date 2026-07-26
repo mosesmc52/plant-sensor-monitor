@@ -71,7 +71,8 @@ does not remove it from Git history.
 
 The Pi can provide a local Wi-Fi network for the sensor microcontroller. On
 current Raspberry Pi OS releases, the setup uses NetworkManager, which is the
-default network manager from Bookworm onward.
+default network manager from Bookworm onward. The installer also installs and
+enables Avahi so the Pi is reachable as `greenhouse.local`.
 
 Install the access-point profile. It is disabled by default:
 
@@ -79,8 +80,9 @@ Install the access-point profile. It is disabled by default:
 make install-pi-access-point
 ```
 
-The installer prompts for the access-point password. You can optionally set
-`AP_SSID`, `AP_PASSWORD`, `AP_INTERFACE`, and `AP_ADDRESS` before running it.
+The installer prompts for the access-point password and installs the Avahi
+mDNS service. You can optionally set `AP_SSID`, `AP_PASSWORD`,
+`AP_INTERFACE`, `AP_ADDRESS`, and `AP_HOSTNAME` before running it.
 
 Enable or disable the access point with:
 
@@ -89,5 +91,9 @@ make enable-pi-access-point
 make disable-pi-access-point
 ```
 
-The default Pi address is `192.168.50.1`. Set the sensor firmware `serverUrl`
-to `http://192.168.50.1:8000/api/v1/readings` when using this local network.
+The default Pi address is `192.168.50.1`, and the default hostname is
+`greenhouse.local`. Set the sensor firmware `serverUrl` to:
+
+```cpp
+http://greenhouse.local:8000/api/v1/readings
+```

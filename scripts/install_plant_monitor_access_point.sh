@@ -6,6 +6,7 @@ connection_name="${AP_CONNECTION_NAME:-plant-monitor-access-point}"
 interface_name="${AP_INTERFACE:-wlan0}"
 ap_ssid="${AP_SSID:-PlantMonitor}"
 ap_address="${AP_ADDRESS:-192.168.50.1/24}"
+ap_hostname="${AP_HOSTNAME:-greenhouse}"
 
 if ! command -v nmcli >/dev/null 2>&1; then
     printf 'Error: nmcli is required. Install or enable NetworkManager first.\n' >&2
@@ -17,6 +18,20 @@ if [[ "$EUID" -eq 0 ]]; then
 else
     sudo_command=(sudo)
 fi
+
+if ! command -v avahi-daemon >/dev/null 2>&1; then
+    "${sudo_command[@]}" apt-get update
+    "${sudo_command[@]}" apt-get install -y avahi-daemon
+fi
+
+if command -v hostnamectl >/dev/null 2>&1; then
+    "${sudo_command[@]}" hostnamectl set-hostname "$ap_hostname"
+else
+    printf 'Error: hostnamectl is required to configure mDNS hostname.\n' >&2
+    exit 1
+fi
+
+"${sudo_command[@]}" systemctl enable --now avahi-daemon
 
 if [[ -z "${AP_PASSWORD:-}" ]]; then
     read -r -s -p "Access point password (8+ characters): " ap_password
@@ -66,5 +81,6 @@ fi
 printf 'Installed access point profile: %s\n' "$connection_name"
 printf 'SSID: %s\n' "$ap_ssid"
 printf 'Pi address: %s\n' "${ap_address%/*}"
+printf 'mDNS hostname: %s.local\n' "$ap_hostname"
 printf 'The profile is disabled by default.\n'
 printf 'Enable it with: make enable-pi-access-point\n'

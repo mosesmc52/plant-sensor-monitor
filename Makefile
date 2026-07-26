@@ -1,7 +1,7 @@
 .PHONY: help install-dev run-dev run-dev-d display-dev test-dev \
 	docker-dev docker-dev-down docker-dev-display logs-dev \
 	install-pi install-pi-service enable-pi-service disable-pi-service run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
-	logs-pi install-pi-access-point enable-pi-access-point disable-pi-access-point \
+	logs-pi install-pi-access-point enable-pi-access-point disable-pi-access-point enable-pi-wifi disable-pi-wifi \
 	build up up-d down
 
 DOCKER_COMPOSE ?= docker compose
@@ -34,6 +34,8 @@ help:
 		'  make install-pi-access-point Install the disabled Wi-Fi access point' \
 		'  make enable-pi-access-point  Enable the Pi access point' \
 		'  make disable-pi-access-point Disable the Pi access point' \
+		'  make enable-pi-wifi          Enable the Pi Wi-Fi radio' \
+		'  make disable-pi-wifi         Disable the Pi Wi-Fi radio' \
 		'  make docker-pi-display   Update the display from the Pi container'
 
 install-dev:
@@ -104,3 +106,9 @@ enable-pi-access-point:
 
 disable-pi-access-point:
 	sudo nmcli connection down id "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" || true
+
+enable-pi-wifi:
+	sudo nmcli radio wifi on
+
+disable-pi-wifi:
+	sudo nmcli radio wifi off
