@@ -7,8 +7,6 @@
 // -------------------- Wi-Fi Configuration --------------------
 
 // Replace with the Raspberry Pi's IP address or hostname.
-// const char* serverUrl =
-//   "http://192.168.1.157:8000/api/v1/readings";
 const char* serverUrl =
    "http://greenhouse.local:8000/api/v1/readings";
 
