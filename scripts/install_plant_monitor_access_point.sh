@@ -4,7 +4,7 @@ set -euo pipefail
 
 connection_name="${AP_CONNECTION_NAME:-plant-monitor-access-point}"
 interface_name="${AP_INTERFACE:-wlan0}"
-ap_ssid="${AP_SSID:-PlantMonitor}"
+ap_ssid="${AP_SSID:-GreenhouseHub}"
 ap_address="${AP_ADDRESS:-192.168.50.1/24}"
 ap_hostname="${AP_HOSTNAME:-greenhouse}"
 ap_channel="${AP_CHANNEL:-6}"

@@ -80,8 +80,8 @@ Install the access-point profile. It is disabled by default:
 make install-pi-access-point
 ```
 
-The installer prompts for the access-point password and installs the Avahi
-mDNS service. You can optionally set `AP_SSID`, `AP_PASSWORD`,
+The default access-point SSID is `GreenhouseHub`. The installer prompts for
+the access-point password and installs the Avahi mDNS service. You can optionally set `AP_SSID`, `AP_PASSWORD`,
 `AP_INTERFACE`, `AP_ADDRESS`, and `AP_HOSTNAME` before running it.
 
 The installer uses NetworkManager's built-in shared DHCP service and disables
