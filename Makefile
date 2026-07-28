@@ -2,6 +2,7 @@
 	docker-dev docker-dev-down docker-dev-display logs-dev \
 	install-pi install-pi-service enable-pi-service disable-pi-service run-pi run-pi-d display-pi docker-pi docker-pi-down docker-pi-display \
 	logs-pi install-pi-access-point enable-pi-access-point disable-pi-access-point enable-pi-wifi disable-pi-wifi \
+	health-pi \
 	build up up-d down
 
 DOCKER_COMPOSE ?= docker compose
@@ -31,6 +32,7 @@ help:
 		'  make docker-pi           Build and run the Pi Docker service' \
 		'  make docker-pi-down      Stop the Pi Docker service' \
 		'  make logs-pi              Follow Raspberry Pi Docker logs' \
+		'  make health-pi            Check the Pi FastAPI health endpoint' \
 		'  make install-pi-access-point Install the disabled Wi-Fi access point' \
 		'  make enable-pi-access-point  Enable/start the AP and enable it at boot' \
 		'  make disable-pi-access-point Disable/stop the AP and disable it at boot' \
@@ -97,6 +99,10 @@ docker-pi-display:
 
 logs-pi:
 	$(PI_COMPOSE) logs -f plant-monitor
+
+health-pi:
+	curl --fail --silent --show-error http://127.0.0.1:8000/health
+	@printf '\n'
 
 install-pi-access-point:
 	./scripts/install_plant_monitor_access_point.sh
