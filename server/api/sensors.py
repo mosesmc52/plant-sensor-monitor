@@ -115,14 +115,24 @@ def _env_int(name: str, default: int) -> int:
         ) from exc
 
 
-def _within_score(value: float, low: float, high: float) -> float:
-    """Return a 0-100 score based on distance from an acceptable range."""
+def _piecewise_score(value: float, low: float, high: float) -> float:
+    """Return a score with healthy, caution, and critical ranges."""
     if low <= value <= high:
         return 100.0
 
     range_width = max(1.0, high - low)
     distance = low - value if value < low else value - high
-    return max(0.0, 100.0 - (distance / range_width) * 100.0)
+    distance_ratio = distance / range_width
+
+    # A value just outside the healthy range enters the caution band below
+    # 80%. The score reaches 60% after one quarter of the range width, then
+    # falls to 0% when it is one full range width beyond the boundary.
+    if distance_ratio <= 0.25:
+        caution_progress = distance_ratio / 0.25
+        return 79.0 - caution_progress * 19.0
+
+    critical_progress = min(1.0, (distance_ratio - 0.25) / 0.75)
+    return 60.0 - critical_progress * 60.0
 
 
 def _determine_state(
@@ -153,22 +163,22 @@ def _calculate_health(
     reading: SensorReading,
     thresholds: PlantThresholds,
 ) -> int:
-    moisture_score = _within_score(
+    moisture_score = _piecewise_score(
         reading.moisture_1_percent,
         thresholds.moisture_low,
         thresholds.moisture_high,
     )
-    temperature_score = _within_score(
+    temperature_score = _piecewise_score(
         reading.temperature_f,
         thresholds.temperature_low_f,
         thresholds.temperature_high_f,
     )
-    humidity_score = _within_score(
+    humidity_score = _piecewise_score(
         reading.humidity_percent,
         thresholds.humidity_low,
         thresholds.humidity_high,
     )
-    light_score = _within_score(
+    light_score = _piecewise_score(
         reading.light_lux,
         thresholds.light_low_lux,
         thresholds.light_high_lux,
@@ -182,7 +192,30 @@ def _calculate_health(
         + light_score * 0.15
     )
 
-    return max(0, min(100, round(weighted_score)))
+    health_percent = max(0, min(100, round(weighted_score)))
+
+    # Leaving any configured healthy range should also leave the happy
+    # display range. Keep the weighted score for severity, but cap it below
+    # 80 so the character and health bar remain consistent.
+    outside_healthy_range = (
+        not thresholds.moisture_low
+        <= reading.moisture_1_percent
+        <= thresholds.moisture_high
+        or not thresholds.temperature_low_f
+        <= reading.temperature_f
+        <= thresholds.temperature_high_f
+        or not thresholds.humidity_low
+        <= reading.humidity_percent
+        <= thresholds.humidity_high
+        or not thresholds.light_low_lux
+        <= reading.light_lux
+        <= thresholds.light_high_lux
+    )
+
+    if outside_healthy_range:
+        health_percent = min(health_percent, 79)
+
+    return health_percent
 
 
 def _render_signature(
@@ -247,10 +280,19 @@ def process_sensor_data(
         reading.device_id,
     )
 
+    health_percent = _calculate_health(reading, thresholds)
+    state = _determine_state(reading, thresholds)
+
+    # Keep the character consistent with the health bar. A plant at 80% or
+    # above should use the healthy graphic; condition-specific graphics are
+    # reserved for plants below the healthy display threshold.
+    if health_percent >= 80:
+        state = "healthy"
+
     current = PlantDisplayState(
         plant_name=plant_name,
-        state=_determine_state(reading, thresholds),
-        health_percent=_calculate_health(reading, thresholds),
+        state=state,
+        health_percent=health_percent,
         temperature_f=reading.temperature_f,
         moisture_percent=reading.moisture_1_percent,
         light_lux=reading.light_lux,
