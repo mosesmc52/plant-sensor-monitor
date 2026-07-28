@@ -7,6 +7,7 @@ interface_name="${AP_INTERFACE:-wlan0}"
 ap_ssid="${AP_SSID:-PlantMonitor}"
 ap_address="${AP_ADDRESS:-192.168.50.1/24}"
 ap_hostname="${AP_HOSTNAME:-greenhouse}"
+ap_channel="${AP_CHANNEL:-6}"
 
 if ! command -v nmcli >/dev/null 2>&1; then
     printf 'Error: nmcli is required. Install or enable NetworkManager first.\n' >&2
@@ -33,6 +34,16 @@ fi
 
 "${sudo_command[@]}" systemctl enable --now avahi-daemon
 
+# NetworkManager's shared IPv4 mode starts its own dnsmasq instance. Stop
+# legacy standalone services so they do not compete for wlan0 or 192.168.50.1.
+for conflicting_service in dnsmasq hostapd; do
+    if "${sudo_command[@]}" systemctl list-unit-files "$conflicting_service.service" \
+        --no-legend 2>/dev/null | grep -q "$conflicting_service.service"; then
+        "${sudo_command[@]}" systemctl disable --now "$conflicting_service.service" \
+            >/dev/null 2>&1 || true
+    fi
+done
+
 if [[ -z "${AP_PASSWORD:-}" ]]; then
     read -r -s -p "Access point password (8+ characters): " ap_password
     printf '\n'
@@ -50,12 +61,18 @@ if "${sudo_command[@]}" nmcli connection show "$connection_name" >/dev/null 2>&1
         802-11-wireless.ssid "$ap_ssid" \
         802-11-wireless.mode ap \
         802-11-wireless.band bg \
+        802-11-wireless.channel "$ap_channel" \
         connection.interface-name "$interface_name" \
         connection.autoconnect no \
         ipv4.method shared \
         ipv4.addresses "$ap_address" \
         ipv6.method disabled \
+        wifi-sec.auth-alg open \
         wifi-sec.key-mgmt wpa-psk \
+        wifi-sec.proto rsn \
+        wifi-sec.pairwise ccmp \
+        wifi-sec.group ccmp \
+        wifi-sec.pmf disable \
         wifi-sec.psk "$ap_password"
 else
     "${sudo_command[@]}" nmcli connection add \
@@ -68,10 +85,16 @@ else
     "${sudo_command[@]}" nmcli connection modify "$connection_name" \
         802-11-wireless.mode ap \
         802-11-wireless.band bg \
+        802-11-wireless.channel "$ap_channel" \
         ipv4.method shared \
         ipv4.addresses "$ap_address" \
         ipv6.method disabled \
+        wifi-sec.auth-alg open \
         wifi-sec.key-mgmt wpa-psk \
+        wifi-sec.proto rsn \
+        wifi-sec.pairwise ccmp \
+        wifi-sec.group ccmp \
+        wifi-sec.pmf disable \
         wifi-sec.psk "$ap_password"
 fi
 
@@ -82,5 +105,6 @@ printf 'Installed access point profile: %s\n' "$connection_name"
 printf 'SSID: %s\n' "$ap_ssid"
 printf 'Pi address: %s\n' "${ap_address%/*}"
 printf 'mDNS hostname: %s.local\n' "$ap_hostname"
+printf 'Wi-Fi channel: %s\n' "$ap_channel"
 printf 'The profile is disabled by default.\n'
 printf 'Enable it with: make enable-pi-access-point\n'

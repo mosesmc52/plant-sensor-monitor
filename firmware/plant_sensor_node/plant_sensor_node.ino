@@ -239,6 +239,9 @@ bool sendSensorData(
     return false;
   }
 
+  // E-ink refreshes can take longer than a normal HTTP request.
+  http.setConnectTimeout(10000);
+  http.setTimeout(60000);
   http.addHeader("Content-Type", "application/json");
 
   // Use valid API fallback values when a sensor was unavailable.

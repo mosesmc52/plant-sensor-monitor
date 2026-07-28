@@ -84,6 +84,9 @@ The installer prompts for the access-point password and installs the Avahi
 mDNS service. You can optionally set `AP_SSID`, `AP_PASSWORD`,
 `AP_INTERFACE`, `AP_ADDRESS`, and `AP_HOSTNAME` before running it.
 
+The installer uses NetworkManager's built-in shared DHCP service and disables
+conflicting standalone `dnsmasq` and `hostapd` services.
+
 Enable or disable the access point with:
 
 ```bash
