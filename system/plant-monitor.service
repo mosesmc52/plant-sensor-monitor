@@ -10,7 +10,7 @@ RemainAfterExit=yes
 
 WorkingDirectory=/home/basil/plant-sensor-monitor
 
-ExecStart=/usr/bin/docker compose -f server/docker/docker-compose.pi.yml up -d
+ExecStart=/usr/bin/docker compose -f server/docker/docker-compose.pi.yml up -d --build
 ExecStop=/usr/bin/docker compose -f server/docker/docker-compose.pi.yml down
 
 TimeoutStartSec=0
