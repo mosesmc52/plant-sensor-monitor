@@ -94,6 +94,9 @@ make enable-pi-access-point
 make disable-pi-access-point
 ```
 
+Enabling the access point also enables it to start automatically after a
+reboot. Disabling it prevents automatic startup.
+
 The default Pi address is `192.168.50.1`, and the default hostname is
 `greenhouse.local`. Set the sensor firmware `serverUrl` to:
 

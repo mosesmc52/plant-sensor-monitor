@@ -32,8 +32,8 @@ help:
 		'  make docker-pi-down      Stop the Pi Docker service' \
 		'  make logs-pi              Follow Raspberry Pi Docker logs' \
 		'  make install-pi-access-point Install the disabled Wi-Fi access point' \
-		'  make enable-pi-access-point  Enable the Pi access point' \
-		'  make disable-pi-access-point Disable the Pi access point' \
+		'  make enable-pi-access-point  Enable/start the AP and enable it at boot' \
+		'  make disable-pi-access-point Disable/stop the AP and disable it at boot' \
 		'  make enable-pi-wifi          Enable the Pi Wi-Fi radio' \
 		'  make disable-pi-wifi         Disable the Pi Wi-Fi radio' \
 		'  make docker-pi-display   Update the display from the Pi container'
@@ -104,9 +104,11 @@ install-pi-access-point:
 enable-pi-access-point:
 	sudo nmcli radio wifi on
 	sudo nmcli device set "$${AP_INTERFACE:-wlan0}" managed yes
+	sudo nmcli connection modify "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" connection.autoconnect yes connection.autoconnect-priority 100
 	sudo nmcli connection up id "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" ifname "$${AP_INTERFACE:-wlan0}"
 
 disable-pi-access-point:
+	sudo nmcli connection modify "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" connection.autoconnect no
 	sudo nmcli connection down id "$${AP_CONNECTION_NAME:-plant-monitor-access-point}" || true
 
 enable-pi-wifi:
