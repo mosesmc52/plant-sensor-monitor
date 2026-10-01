@@ -13,8 +13,11 @@ const char* serverUrl =
 
 // -------------------- Device Configuration --------------------
 const char* deviceId = "Pesto";
+
+const bool displaySensorDataEnabled = false;
+
 // Set to false to disable Wi-Fi and sensor POST requests.
-const bool postApiEnabled = false;
+const bool postApiEnabled = true;
 const unsigned long postIntervalMs = 15000;
 unsigned long lastPostTime = 0;
 unsigned long readingNumber = 0;
@@ -165,12 +168,13 @@ void loop() {
   }
 
   // -------------------- OLED Output --------------------
-
-  displaySensorData(
-    moisture1,
-    lux,
-    climate
-  );
+  if (displaySensorDataEnabled) {
+    displaySensorData(
+      moisture1,
+      lux,
+      climate
+    );
+  }
 
   if (postApiEnabled) {
     unsigned long currentTime = millis();
